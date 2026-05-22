@@ -17,9 +17,29 @@ const io = new Server(server, {
 });
 
 io.on('connection', (socket) => {
-  console.log('Connected:', socket.id);
+  console.log('Connected: new', socket.id);
 
   socket.on('join-room', (roomId) => {
+    console.log('JOIN ROOM:', roomId, socket.id);
+
+    socket.join(roomId);
+
+    const room = io.sockets.adapter.rooms.get(roomId);
+
+    console.log('ROOM MEMBERS:', roomId, room ? [...room] : []);
+
+    const clients = Array.from(room || []);
+
+    socket.emit(
+      'all-users',
+      clients.filter((id) => id !== socket.id)
+    );
+
+    socket.to(roomId).emit('user-joined', socket.id);
+  });
+
+  socket.on('join-room', (roomId) => {
+    console.log('asf', 'roomid');
     socket.join(roomId);
 
     const clients = Array.from(io.sockets.adapter.rooms.get(roomId) || []);
