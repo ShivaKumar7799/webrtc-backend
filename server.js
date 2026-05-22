@@ -1,0 +1,58 @@
+const express = require('express');
+const http = require('http');
+const cors = require('cors');
+const { Server } = require('socket.io');
+
+const app = express();
+
+app.use(cors());
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
+});
+
+io.on('connection', (socket) => {
+  console.log('Connected:', socket.id);
+
+  socket.on('join-room', (roomId) => {
+    socket.join(roomId);
+
+    const clients = Array.from(io.sockets.adapter.rooms.get(roomId) || []);
+
+    socket.emit(
+      'all-users',
+      clients.filter((id) => id !== socket.id)
+    );
+
+    socket.to(roomId).emit('user-joined', socket.id);
+  });
+
+  socket.on('sending-signal', (payload) => {
+    io.to(payload.userToSignal).emit('user-signal', {
+      signal: payload.signal,
+      callerId: payload.callerId,
+    });
+  });
+
+  socket.on('returning-signal', (payload) => {
+    io.to(payload.callerId).emit('receiving-returned-signal', {
+      signal: payload.signal,
+      id: socket.id,
+    });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Disconnected');
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => {
+  console.log(`Server running on ${PORT}`);
+});
