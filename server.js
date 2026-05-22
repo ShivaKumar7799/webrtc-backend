@@ -51,6 +51,22 @@ io.on('connection', (socket) => {
   });
 });
 
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+
+  socket.on('join-room', (roomId) => {
+    console.log('join-room', roomId, socket.id);
+  });
+
+  socket.on('sending-signal', (payload) => {
+    console.log('sending-signal', payload);
+  });
+
+  socket.on('returning-signal', (payload) => {
+    console.log('returning-signal', payload);
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
